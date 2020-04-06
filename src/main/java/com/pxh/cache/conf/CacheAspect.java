@@ -23,10 +23,11 @@ public class CacheAspect {
 
 	@Autowired
 	private ISerializer serializer;
-
+	
 	@Autowired
 	private IKeyGenarator keyGenarator;
-
+	
+	
 	@Pointcut(value = "@annotation(com.pxh.cache.annotation.Cacheable)")
 	private void pointCut() {
 	}
@@ -34,36 +35,36 @@ public class CacheAspect {
 	@Around(value = "pointCut()")
 	public Object aroundAdvice(ProceedingJoinPoint pjp) throws Throwable {
 		Object ret = getFromCache(pjp);
-		if (ret != null) {
+		if(ret != null){
 			return ret;
 		}
-
-		return proccedAndCached(pjp);
+		
+    	return proccedAndCached(pjp);
 	}
-
+	
 	@AfterThrowing(pointcut = "pointCut()", throwing = "e")
 	public void doException(JoinPoint jp, Exception e) {
 		if (e != null) {
 			String staticPart = jp.getStaticPart().toString();
 			String exception = e.toString();
-			// this can be replace with notice action
+			//this can be replace with notice action 
 			logger.error("===============> Exception. staticPart:{}", staticPart, exception);
 		}
 	}
-
+	
 	private Object proccedAndCached(ProceedingJoinPoint pjp) throws Throwable {
 		Cacheable cacheable = getMethodSignature(pjp).getMethod().getAnnotation(Cacheable.class);
 		Object ret = pjp.proceed();
-		if (!cacheable.cacheNullResult() && ret == null) {
+		if(!cacheable.cacheNullResult() && ret==null){
 			return ret;
 		}
-
+		
 		final long expireTime = cacheable.timeout();
 		final String key = genarateKey(pjp);
 		this.serializer.serialize(key.getBytes(), ret, expireTime);
-
+		
 		return ret;
-
+		
 	}
 
 	private String genarateKey(ProceedingJoinPoint pjp) {
@@ -81,5 +82,5 @@ public class CacheAspect {
 		MethodSignature methodSignature = getMethodSignature(pjp);
 		return this.serializer.deserialize(key.getBytes(), methodSignature.getReturnType());
 	}
-
+	
 }
