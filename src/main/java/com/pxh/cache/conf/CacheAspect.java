@@ -1,5 +1,7 @@
 package com.pxh.cache.conf;
 
+import java.util.concurrent.locks.Lock;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.util.concurrent.Striped;
 import com.pxh.cache.IKeyGenarator;
 import com.pxh.cache.ISerializer;
 import com.pxh.cache.annotation.Cacheable;
@@ -21,6 +24,7 @@ import com.pxh.cache.annotation.Cacheable;
 public class CacheAspect {
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
+	private final Striped<Lock> striped = Striped.lazyWeakLock(127);
 	@Autowired
 	private ISerializer serializer;
 
@@ -52,15 +56,29 @@ public class CacheAspect {
 	}
 
 	private Object proccedAndCached(ProceedingJoinPoint pjp) throws Throwable {
-		Cacheable cacheable = getMethodSignature(pjp).getMethod().getAnnotation(Cacheable.class);
-		Object ret = pjp.proceed();
-		if (!cacheable.cacheNullResult() && ret == null) {
-			return ret;
-		}
-
-		final long expireTime = cacheable.timeout();
 		final String key = genarateKey(pjp);
-		this.serializer.serialize(key.getBytes(), ret, expireTime);
+
+		Lock lock = this.striped.get(key);
+		lock.lock();
+		Object ret = null;
+		try {
+			//再次判断缓存中是否有数据
+			ret = getFromCache(pjp);
+			if (ret != null) {
+				return ret;
+			}
+			
+			ret = pjp.proceed();
+			Cacheable cacheable = getMethodSignature(pjp).getMethod().getAnnotation(Cacheable.class);
+			if (!cacheable.cacheNullResult() && ret == null) {
+				return ret;
+			}
+
+			final long expireTime = cacheable.timeout();
+			this.serializer.serialize(key.getBytes(), ret, expireTime);
+		} finally {
+			lock.unlock();
+		}
 
 		return ret;
 

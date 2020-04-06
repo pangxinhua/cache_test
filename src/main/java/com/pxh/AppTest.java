@@ -1,5 +1,7 @@
 package com.pxh;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -8,33 +10,58 @@ import com.pxh.demo.service.StuService;
 
 @SpringBootApplication
 public class AppTest {
+	private static Logger log = LoggerFactory.getLogger(AppTest.class);
+	
 
 	public static void main(String[] args) throws Exception {
 		// start
 		ConfigurableApplicationContext context = SpringApplication.run(AppTest.class, args);
-		StuService service = context.getBean(StuService.class);
+		final StuService service = context.getBean(StuService.class);
 //		Stu stu = service.getByAge(1);
-//		System.out.println(stu);
 //		stu = service.getByAge(1);
-//		System.out.println(stu);
+//		log.info(Thread.currentThread().getId()+" : "+stu);
 		
-		System.out.println("###########################");
-		System.out.println(service.list());
-		System.out.println(service.list());
+	Thread th1= new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				
+				
+				log.info(Thread.currentThread().getId()+" : "+"###########################");
+				log.info(Thread.currentThread().getId()+" : "+service.age());
+				log.info(Thread.currentThread().getId()+" : "+service.age());
+				log.info(Thread.currentThread().getId()+" : "+"###########################");
+				log.info(Thread.currentThread().getId()+" : "+service.age1());
+				log.info(Thread.currentThread().getId()+" : "+service.age1());
+				log.info(Thread.currentThread().getId()+" : "+"###########################");
+				log.info(Thread.currentThread().getId()+" : "+service.info());
+				log.info(Thread.currentThread().getId()+" : "+service.info());
+				
+			}
+		});
 		
-		System.out.println("###########################");
+	Thread th2 = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+			
+				log.info(Thread.currentThread().getId()+" : "+"###########################");
+				log.info(Thread.currentThread().getId()+" : "+service.age1());
+				log.info(Thread.currentThread().getId()+" : "+service.age1());
+				log.info(Thread.currentThread().getId()+" : "+"###########################");
+				log.info(Thread.currentThread().getId()+" : "+service.age());
+				log.info(Thread.currentThread().getId()+" : "+service.age());
+				log.info(Thread.currentThread().getId()+" : "+"###########################");
+				log.info(Thread.currentThread().getId()+" : "+service.info());
+				log.info(Thread.currentThread().getId()+" : "+service.info());
+				
+			}
+		});
 		
-		System.out.println(service.map().values());
-		System.out.println(service.map().values());
-		System.out.println("###########################");
-		System.out.println(service.age());
-		System.out.println(service.age());
-		System.out.println("###########################");
-		System.out.println(service.age1());
-		System.out.println(service.age1());
-		System.out.println("###########################");
-		System.out.println(service.info());
-		System.out.println(service.info());
+		th1.start();
+		th2.start();
+		th1.join();
+		th2.join();
 	}
 
 }

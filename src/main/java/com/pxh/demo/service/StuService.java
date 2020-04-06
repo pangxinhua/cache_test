@@ -34,7 +34,7 @@ public class StuService {
 		return stus;
 	}
 	
-	@Cacheable(timeout=10)
+	@Cacheable(timeout=20)
 	public Integer age() {
 		try {
 			Thread.sleep(10000);
@@ -45,7 +45,7 @@ public class StuService {
 	}
 	@Cacheable
 	public Integer age1() {
-		return 2;
+		return 200;
 	}
 	public String info() {
 		return "testinfo";
