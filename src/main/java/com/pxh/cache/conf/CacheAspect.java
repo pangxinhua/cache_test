@@ -24,7 +24,7 @@ import com.pxh.cache.annotation.Cacheable;
 public class CacheAspect {
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final Striped<Lock> striped = Striped.lazyWeakLock(127);
+	private final Striped<Lock> striped = Striped.lazyWeakLock(Runtime.getRuntime().availableProcessors() * 4);
 	@Autowired
 	private ISerializer serializer;
 
